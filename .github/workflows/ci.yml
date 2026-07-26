@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  lint-and-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint (ruff)
+        run: ruff check src scripts app
+
+      - name: Smoke test (tiny epoch budget, no GPU needed)
+        run: |
+          python -m src.train --model mlp --epochs 2
+          python -m src.train --model gcn --epochs 2
+          python -m src.train --model gatv2 --epochs 2

@@ -1,7 +1,6 @@
 """GATv2 / GCN / MLP node classifiers sharing the same 2-class output head."""
-import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torch_geometric.nn import GATv2Conv, GCNConv
 
 

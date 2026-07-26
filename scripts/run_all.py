@@ -7,12 +7,18 @@ import argparse
 import json
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from src.baselines import train_rf
 from src.data import load_data
-from src.evaluate import comparison_table, confusion, per_timestep_f1, write_table_md, nn_predict
+from src.evaluate import (
+    comparison_table,
+    confusion,
+    nn_predict,
+    per_timestep_f1,
+    write_table_md,
+)
 from src.train import train_model
 
 SEED = 0
@@ -30,7 +36,7 @@ def main(epochs=100, seed=SEED, out_dir="results"):
         run_infos[name] = info
         trained[name] = model
 
-    _, rf_data, rf_info = train_rf(seed=seed, out_dir=str(out_dir))
+    _, _rf_data, rf_info = train_rf(seed=seed, out_dir=str(out_dir))
     run_infos["rf"] = rf_info
 
     # ---- comparison table ----

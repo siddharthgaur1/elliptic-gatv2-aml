@@ -61,7 +61,7 @@ def train_model(
     verbose=True,
 ):
     set_seed(seed)
-    dataset, data = load_data(root=data_root, seed=seed)
+    _dataset, data = load_data(root=data_root, seed=seed)
 
     model = build_model(model_name, in_channels=data.num_features, hidden=hidden)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
@@ -94,11 +94,15 @@ def train_model(
             epochs_no_improve += 1
 
         if verbose and (epoch % 10 == 0 or epoch == 1):
-            print(f"[{model_name}] epoch {epoch:03d} loss {loss.item():.4f} val_illicit_f1 {val_metrics['illicit_f1']:.4f}")
+            vf1 = val_metrics["illicit_f1"]
+            print(f"[{model_name}] epoch {epoch:03d} loss {loss.item():.4f} val_illicit_f1 {vf1:.4f}")
 
         if epochs_no_improve >= patience:
             if verbose:
-                print(f"[{model_name}] early stopping at epoch {epoch} (best epoch {best_epoch}, val_f1={best_val_f1:.4f})")
+                print(
+                    f"[{model_name}] early stopping at epoch {epoch} "
+                    f"(best epoch {best_epoch}, val_f1={best_val_f1:.4f})"
+                )
             break
 
     runtime = time.time() - t0
@@ -114,7 +118,13 @@ def train_model(
     run_info = {
         "model": model_name,
         "seed": seed,
-        "hyperparams": {"epochs": epochs, "lr": lr, "weight_decay": weight_decay, "patience": patience, "hidden": hidden},
+        "hyperparams": {
+            "epochs": epochs,
+            "lr": lr,
+            "weight_decay": weight_decay,
+            "patience": patience,
+            "hidden": hidden,
+        },
         "best_epoch": best_epoch,
         "best_val_illicit_f1": best_val_f1,
         "test_metrics": test_metrics,
