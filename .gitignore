@@ -8,3 +8,5 @@ data/
 .DS_Store
 .streamlit/secrets.toml
 run_all.log
+gatv2_retry.log
+results_retry/
