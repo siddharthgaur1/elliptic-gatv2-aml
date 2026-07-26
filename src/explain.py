@@ -16,7 +16,7 @@ from src.evaluate import load_trained_nn
 def get_attention_for_node(model, data, node_idx, num_hops=1):
     """Return (subgraph_nodes, center_local_idx, edge_index_local, alpha) for the
     LAST GATv2 layer's attention over node_idx's k-hop neighborhood."""
-    subset, edge_index_local, mapping, edge_mask = k_hop_subgraph(
+    subset, edge_index_local, mapping, _edge_mask = k_hop_subgraph(
         node_idx, num_hops, data.edge_index, relabel_nodes=True
     )
     x_sub = data.x[subset]

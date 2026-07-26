@@ -8,17 +8,15 @@ canonical step 35..49, in chronological order. Bin boundaries are therefore
 approximate, not exact integer time-step membership, and this is called out
 in the README.
 """
-import json
 from pathlib import Path
 
+import joblib
 import numpy as np
 import torch
 from sklearn.metrics import confusion_matrix, f1_score
 
 from src.data import ILLICIT
 from src.models import build_model
-import joblib
-
 
 N_TEST_STEPS = 15  # canonical steps 35..49
 
