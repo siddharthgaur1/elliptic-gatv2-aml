@@ -52,6 +52,14 @@ sampling might close some of this gap, but on the run actually committed
 here, feature-only Random Forest is the honest state of the art for this
 task.
 
+We also tried retuning GATv2 (150 epochs, lr=0.005, hidden=64, patience 25,
+vs. the committed run's 100 epochs / lr=0.01) to check whether the gap was
+just undertraining. It wasn't: test illicit-F1 came out to 0.4269 — within
+noise of the original 0.4266. This result isn't part of the canonical
+comparison table (the original run above is what's committed under
+`results/`), but it's evidence the RF-vs-GATv2 gap here is a real property
+of the dataset/architecture combination, not a hyperparameter accident.
+
 ### Per-time-step robustness
 
 `results/figures/per_timestep_f1.png` plots illicit-F1 in 15 chronological
