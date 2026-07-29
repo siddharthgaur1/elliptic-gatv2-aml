@@ -62,6 +62,8 @@ of the dataset/architecture combination, not a hyperparameter accident.
 
 ### Per-time-step robustness
 
+![Illicit-F1 per chronological test-period bin, all four models](results/figures/per_timestep_f1.png)
+
 `results/figures/per_timestep_f1.png` plots illicit-F1 in 15 chronological
 quantile bins over the test period (steps ≈35-49; PyG's built-in loader
 only exposes a standardized/z-scored time-step feature, not the raw
@@ -78,6 +80,12 @@ finding: the graph signal is not adding robustness here, and if anything
 degrades faster under distribution shift.
 
 ### Attention inspection
+
+<p float="left">
+  <img src="results/figures/attention_node_136279.png" width="32%" alt="GATv2 attention weights, illicit test node 136279" />
+  <img src="results/figures/attention_node_136280.png" width="32%" alt="GATv2 attention weights, illicit test node 136280" />
+  <img src="results/figures/attention_node_136312.png" width="32%" alt="GATv2 attention weights, illicit test node 136312" />
+</p>
 
 `results/figures/attention_node_*.png` show GATv2's last-layer attention
 (averaged over 8 heads) over the 1-hop neighborhood of three correctly
