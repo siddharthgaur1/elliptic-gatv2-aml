@@ -95,6 +95,24 @@ each node — but per the F1 numbers above, concentrating on a few neighbors
 is not enough to recover the precision the node's own features already
 gave up by being pooled with its neighborhood.
 
+## Quickstart
+
+See "Reproduce" below — `pip install -r requirements.txt`, then
+`python -m scripts.run_all --epochs 100 --seed 0` trains all 4 models
+(~30-35 min CPU) and writes `results/`.
+
+## Architecture
+
+`scripts/inspect_data.py` confirms the label encoding and temporal split
+empirically before anything trains. `src/data.py` builds the PyG data object
+and the val/test split; `src/models.py` defines GATv2/GCN/MLP; `src/train.py`
+runs the shared training loop (fixed seed, class-weighted loss) for all
+three neural models, while `src/baselines.py` fits the Random Forest;
+`src/evaluate.py` computes the shared metrics (precision/recall/F1, per-
+time-step breakdown) for all four; `src/explain.py` generates the attention
+figures from the committed GATv2 checkpoint. `scripts/run_all.py` wires all
+of this into one command and writes everything under `results/`.
+
 ## Repository layout
 
 ```
@@ -107,6 +125,23 @@ app/        Streamlit demo — inspect any test-set node, its 1-hop
 results/    committed metrics.json, table.md, per-model run logs, trained
             models (results/models/*.pt, *.joblib), figures
 ```
+
+## Limitations
+
+- **No live deployment** — the Streamlit demo runs local-only against
+  committed checkpoints; there's no hosted instance.
+- **CPU-only training** — GATv2's 100-epoch run takes ~24 min on CPU; no GPU
+  path is set up or benchmarked here.
+- **Time-step feature is standardized, not raw** — per-time-step analysis
+  uses equal-count chronological bins, not exact integer steps (see "Per-
+  time-step robustness" above); don't read the bin boundaries as exact dates.
+- **Single seed for the canonical comparison table** — `results/` reflects
+  seed 0 only; the retune check (see above) suggests the RF-vs-GNN gap is
+  real and not a seed artifact, but full multi-seed variance isn't reported.
+- **GATv2 underperforming here is dataset-specific**, not a general claim
+  about GNNs vs. tree ensembles — see "What the graph does and doesn't buy
+  you" above for why this dataset's features already encode local graph
+  structure.
 
 ## Data and label encoding (empirically confirmed, not assumed)
 
