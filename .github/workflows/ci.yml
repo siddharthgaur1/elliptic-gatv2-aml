@@ -18,10 +18,15 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
 
       - name: Lint (ruff)
-        run: ruff check src scripts app
+        run: ruff check src scripts app tests
+
+      - name: Tests
+        run: pytest tests/ -v
 
       - name: Smoke test (tiny epoch budget, no GPU needed)
         run: |
