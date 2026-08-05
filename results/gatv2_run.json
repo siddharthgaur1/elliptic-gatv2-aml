@@ -2,7 +2,7 @@
   "model": "gatv2",
   "seed": 0,
   "hyperparams": {
-    "epochs": 100,
+    "epochs": 800,
     "lr": 0.01,
     "weight_decay": 0.0005,
     "patience": 15,
@@ -16,7 +16,7 @@
     "illicit_recall": 0.7313019390581718,
     "macro_f1": 0.677374541647183
   },
-  "runtime_sec": 1457.350148677826,
+  "runtime_sec": 3926.7313005924225,
   "history": [
     {
       "epoch": 1,
@@ -817,6 +817,118 @@
       "val_illicit_precision": 0.3411371237458194,
       "val_illicit_recall": 0.9357798165137615,
       "val_macro_f1": 0.7380841121495327
+    },
+    {
+      "epoch": 101,
+      "loss": 0.2334749549627304,
+      "val_illicit_f1": 0.4660633484162896,
+      "val_illicit_precision": 0.30930930930930933,
+      "val_illicit_recall": 0.944954128440367,
+      "val_macro_f1": 0.7191916554420177
+    },
+    {
+      "epoch": 102,
+      "loss": 0.23149488866329193,
+      "val_illicit_f1": 0.507537688442211,
+      "val_illicit_precision": 0.3494809688581315,
+      "val_illicit_recall": 0.926605504587156,
+      "val_macro_f1": 0.742333605014571
+    },
+    {
+      "epoch": 103,
+      "loss": 0.23272518813610077,
+      "val_illicit_f1": 0.5088161209068011,
+      "val_illicit_precision": 0.3506944444444444,
+      "val_illicit_recall": 0.926605504587156,
+      "val_macro_f1": 0.7430324916749615
+    },
+    {
+      "epoch": 104,
+      "loss": 0.23467686772346497,
+      "val_illicit_f1": 0.47706422018348627,
+      "val_illicit_precision": 0.3180428134556575,
+      "val_illicit_recall": 0.9541284403669725,
+      "val_macro_f1": 0.7251706473631918
+    },
+    {
+      "epoch": 105,
+      "loss": 0.23483772575855255,
+      "val_illicit_f1": 0.5112781954887218,
+      "val_illicit_precision": 0.35172413793103446,
+      "val_illicit_recall": 0.9357798165137615,
+      "val_macro_f1": 0.7442608739142758
+    },
+    {
+      "epoch": 106,
+      "loss": 0.22785969078540802,
+      "val_illicit_f1": 0.46436781609195404,
+      "val_illicit_precision": 0.3098159509202454,
+      "val_illicit_recall": 0.926605504587156,
+      "val_macro_f1": 0.7185310309804667
+    },
+    {
+      "epoch": 107,
+      "loss": 0.2284943014383316,
+      "val_illicit_f1": 0.4636363636363636,
+      "val_illicit_precision": 0.3081570996978852,
+      "val_illicit_recall": 0.9357798165137615,
+      "val_macro_f1": 0.7179814088350673
+    },
+    {
+      "epoch": 108,
+      "loss": 0.22276374697685242,
+      "val_illicit_f1": 0.4857142857142857,
+      "val_illicit_precision": 0.3279742765273312,
+      "val_illicit_recall": 0.9357798165137615,
+      "val_macro_f1": 0.7302226084631326
+    },
+    {
+      "epoch": 109,
+      "loss": 0.2262457013130188,
+      "val_illicit_f1": 0.4801864801864802,
+      "val_illicit_precision": 0.321875,
+      "val_illicit_recall": 0.944954128440367,
+      "val_macro_f1": 0.7270355049954534
+    },
+    {
+      "epoch": 110,
+      "loss": 0.2282310426235199,
+      "val_illicit_f1": 0.46741573033707867,
+      "val_illicit_precision": 0.30952380952380953,
+      "val_illicit_recall": 0.9541284403669725,
+      "val_macro_f1": 0.7198043100823021
+    },
+    {
+      "epoch": 111,
+      "loss": 0.23893003165721893,
+      "val_illicit_f1": 0.4883720930232558,
+      "val_illicit_precision": 0.32710280373831774,
+      "val_illicit_recall": 0.963302752293578,
+      "val_macro_f1": 0.7313024672190536
+    },
+    {
+      "epoch": 112,
+      "loss": 0.23423610627651215,
+      "val_illicit_f1": 0.47165532879818595,
+      "val_illicit_precision": 0.3132530120481928,
+      "val_illicit_recall": 0.9541284403669725,
+      "val_macro_f1": 0.7221651805243422
+    },
+    {
+      "epoch": 113,
+      "loss": 0.23644688725471497,
+      "val_illicit_f1": 0.4951923076923077,
+      "val_illicit_precision": 0.3355048859934853,
+      "val_illicit_recall": 0.944954128440367,
+      "val_macro_f1": 0.7353183240987263
+    },
+    {
+      "epoch": 114,
+      "loss": 0.22875569760799408,
+      "val_illicit_f1": 0.5,
+      "val_illicit_precision": 0.33993399339933994,
+      "val_illicit_recall": 0.944954128440367,
+      "val_macro_f1": 0.7379616643291258
     }
   ]
 }
