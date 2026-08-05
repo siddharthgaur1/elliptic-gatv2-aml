@@ -3,6 +3,11 @@
 [![CI](https://github.com/siddharthgaur1/elliptic-gatv2-aml/actions/workflows/ci.yml/badge.svg)](https://github.com/siddharthgaur1/elliptic-gatv2-aml/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+
+![Illicit-F1 by model and a precision/recall scatter: Random Forest 0.808 and MLP 0.656 beat GATv2 0.427 and GCN 0.409](results/figures/model_comparison.png)
+
+<sub>Regenerate with `python scripts/make_results_chart.py` — it reads `results/*_run.json`, so it cannot disagree with the table below.</sub>
+
 Flagging illicit Bitcoin transactions on a 200k-node temporal graph with a
 GATv2 network — benchmarked honestly against Random Forest, because on this
 dataset the graph doesn't always win, and pretending otherwise is the easy
