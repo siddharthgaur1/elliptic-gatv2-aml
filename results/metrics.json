@@ -17,10 +17,10 @@
     },
     {
       "model": "mlp",
-      "illicit_precision": 0.6787,
-      "illicit_recall": 0.6085,
-      "illicit_f1": 0.6417,
-      "macro_f1": 0.8091
+      "illicit_precision": 0.6789,
+      "illicit_recall": 0.6343,
+      "illicit_f1": 0.6558,
+      "macro_f1": 0.8164
     },
     {
       "model": "rf",
@@ -44,10 +44,10 @@
       "tp": 467
     },
     "mlp": {
-      "tn": 15275,
-      "fp": 312,
-      "fn": 424,
-      "tp": 659
+      "tn": 15262,
+      "fp": 325,
+      "fn": 396,
+      "tp": 687
     },
     "rf": {
       "tn": 15519,
@@ -61,7 +61,7 @@
       "model": "gatv2",
       "seed": 0,
       "hyperparams": {
-        "epochs": 100,
+        "epochs": 800,
         "lr": 0.01,
         "weight_decay": 0.0005,
         "patience": 15,
@@ -75,13 +75,13 @@
         "illicit_recall": 0.7313019390581718,
         "macro_f1": 0.677374541647183
       },
-      "runtime_sec": 1457.350148677826
+      "runtime_sec": 3926.7313005924225
     },
     "gcn": {
       "model": "gcn",
       "seed": 0,
       "hyperparams": {
-        "epochs": 100,
+        "epochs": 800,
         "lr": 0.01,
         "weight_decay": 0.0005,
         "patience": 15,
@@ -95,27 +95,27 @@
         "illicit_recall": 0.4312096029547553,
         "macro_f1": 0.6826246368146864
       },
-      "runtime_sec": 115.19611525535583
+      "runtime_sec": 366.4244246482849
     },
     "mlp": {
       "model": "mlp",
       "seed": 0,
       "hyperparams": {
-        "epochs": 100,
+        "epochs": 800,
         "lr": 0.01,
         "weight_decay": 0.0005,
         "patience": 15,
         "hidden": 64
       },
-      "best_epoch": 92,
-      "best_val_illicit_f1": 0.7938931297709924,
+      "best_epoch": 108,
+      "best_val_illicit_f1": 0.8547717842323651,
       "test_metrics": {
-        "illicit_f1": 0.6416747809152873,
-        "illicit_precision": 0.678681771369722,
-        "illicit_recall": 0.6084949215143121,
-        "macro_f1": 0.8090749407996496
+        "illicit_f1": 0.6558472553699284,
+        "illicit_precision": 0.6788537549407114,
+        "illicit_recall": 0.6343490304709142,
+        "macro_f1": 0.8163857816295954
       },
-      "runtime_sec": 78.46101021766663
+      "runtime_sec": 375.76274943351746
     },
     "rf": {
       "model": "rf",
@@ -130,7 +130,7 @@
         "illicit_recall": 0.7211449676823638,
         "macro_f1": 0.8983540873657487
       },
-      "runtime_sec": 1.5329642295837402
+      "runtime_sec": 5.184646844863892
     }
   }
 }

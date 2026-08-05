@@ -10,10 +10,15 @@ way to be wrong.
 
 ## Results (test set: time steps 35-49, seed 0)
 
+All three neural models are trained to convergence: `--epochs 800` with
+early stopping (patience 15), and **early stopping is what ends each run** —
+GATv2 at epoch 114 (best 99), GCN at 110 (best 95), MLP at 123 (best 108).
+No model is stopped by the epoch budget.
+
 | Model | Illicit-P | Illicit-R | Illicit-F1 | Macro-F1 |
 |---|---|---|---|---|
 | **Random Forest** | 0.9199 | 0.7211 | **0.8085** | 0.8984 |
-| MLP (features only) | 0.6787 | 0.6085 | 0.6417 | 0.8091 |
+| MLP (features only) | 0.6789 | 0.6343 | 0.6558 | 0.8164 |
 | GATv2 | 0.3011 | 0.7313 | 0.4266 | 0.6774 |
 | GCN | 0.3885 | 0.4312 | 0.4088 | 0.6826 |
 
@@ -21,6 +26,14 @@ Numbers are from the actual committed run: `results/metrics.json`,
 `results/table.md`, `results/*_run.json` (one per model, with hyperparams,
 seed, best epoch, and full training history). Nothing here is hand-typed
 without a backing file.
+
+An earlier version of this table came from a 100-epoch budget. Re-running at
+800 changed exactly one row: **the MLP improved** (illicit-F1 0.6417 → 0.6558,
+macro-F1 0.8091 → 0.8164), because it was the only model the old cap actually
+truncated — its best epoch was 108. GATv2 and GCN reproduce bit-for-bit
+(0.4266 and 0.4088), because their best epochs, 99 and 95, were genuinely
+their best rather than the budget running out. The correction moves the
+*baseline* up, so the graph models come out slightly further behind, not closer.
 
 **Random Forest wins.** Not a typo, not a bug — see below.
 
@@ -52,13 +65,13 @@ sampling might close some of this gap, but on the run actually committed
 here, feature-only Random Forest is the honest state of the art for this
 task.
 
-We also tried retuning GATv2 (150 epochs, lr=0.005, hidden=64, patience 25,
-vs. the committed run's 100 epochs / lr=0.01) to check whether the gap was
-just undertraining. It wasn't: test illicit-F1 came out to 0.4269 — within
-noise of the original 0.4266. This result isn't part of the canonical
-comparison table (the original run above is what's committed under
-`results/`), but it's evidence the RF-vs-GATv2 gap here is a real property
-of the dataset/architecture combination, not a hyperparameter accident.
+**The gap is not undertraining, and that has now been tested twice.** An
+earlier check retuned GATv2 (150 epochs, lr=0.005, patience 25) and got
+illicit-F1 0.4269, within noise of 0.4266. The current committed run goes
+further: an 800-epoch budget with early stopping, where **GATv2 stops itself
+at epoch 114** having last improved at 99. Given eight times the budget it
+does not use it, and the test metrics reproduce exactly. Whatever is holding
+GATv2 at ~0.43 illicit-F1 on this dataset, it is not a lack of training.
 
 ### Per-time-step robustness
 
@@ -98,8 +111,9 @@ gave up by being pooled with its neighborhood.
 ## Quickstart
 
 See "Reproduce" below — `pip install -r requirements.txt`, then
-`python -m scripts.run_all --epochs 100 --seed 0` trains all 4 models
-(~30-35 min CPU) and writes `results/`.
+`python -m scripts.run_all --epochs 800 --seed 0` trains all 4 models
+(~80 min CPU; early stopping ends every run well before 800) and writes
+`results/`.
 
 ## Architecture
 
@@ -203,10 +217,11 @@ pip install -r requirements.txt
 python scripts/inspect_data.py
 
 # 2. Train all 4 models + write results/metrics.json, results/table.md,
-#    figures (per-time-step F1 curve). ~30-35 min total on CPU (GATv2 is
-#    the slow one, ~24 min for 100 epochs; GCN/MLP/RF are all well under a
-#    minute combined).
-python -m scripts.run_all --epochs 100 --seed 0
+#    figures (per-time-step F1 curve). ~80 min total on CPU. The budget is
+#    800 but early stopping (patience 15) ends every run far sooner —
+#    GATv2 at 114 epochs (~65 min, it is the slow one), GCN at 110 (~6 min),
+#    MLP at 123 (~6 min), RF in seconds.
+python -m scripts.run_all --epochs 800 --seed 0
 
 # 3. Attention inspection figures (uses the committed GATv2 weights)
 python -m src.explain
