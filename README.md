@@ -229,6 +229,48 @@ as validation, leaving PyG's canonical `test_mask` (steps 35-49) untouched
 as the test set. This achieves the same "hold out a later time slice"
 purpose the spec was after.
 
+### The anti-leakage invariant, and the bug testing it caught
+
+Every number in the Results table depends on one property: **no node the model
+fits on may postdate any node it validates on.** If that breaks, early stopping
+is choosing a checkpoint using information from the future, and the illicit-F1
+figures become interpolated rather than forward-looking.
+
+That property was implemented and asserted nowhere. It was also *untestable* —
+the logic sat inline in `load_data()`, behind an `EllipticBitcoinDataset()` call
+that downloads 200k nodes. So it was extracted into a pure function,
+`src/data.py:temporal_val_split(train_mask, time_col, val_fraction)`, and
+`tests/test_data_split.py` asserts the invariant directly with no network and no
+dataset:
+
+```python
+fit, val = temporal_val_split(train_mask, time_col, val_fraction=0.15)
+assert time_col[fit].max() <= time_col[val].min()
+```
+
+A second test runs the same split with the time column shuffled against index
+order, so a silent fallback to array position — the obvious way this breaks —
+fails loudly.
+
+**The extraction immediately surfaced a real bug.** The original computed:
+
+```python
+n_val = int(len(order) * val_fraction)
+val_idx = train_idx[order[-n_val:]]   # temporally latest slice
+fit_idx = train_idx[order[:-n_val]]   # remainder gets gradient updates
+```
+
+When `n_val == 0`, `order[-0:]` is **the entire array** and `order[:-0]` is
+**empty** — the exact inverse of the intent. Every training node became
+validation, none was fitted on, and training proceeded on an empty set without
+raising anything. Unreachable at the committed `val_fraction=0.15` over ~30k
+nodes; reachable by anyone lowering the fraction or running on a subset. It is
+now an explicit branch with a test.
+
+**The committed results are unaffected.** At `val_fraction=0.15` the real path
+takes the same branch it always did, so RF 0.8085 / GATv2 0.4266 / GCN 0.4088 /
+MLP 0.6558 stand exactly as published — verified rather than assumed.
+
 ## Models
 
 - **GATv2** (primary) — 2-layer `GATv2Conv`, 8 heads, dropout, ELU,
