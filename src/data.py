@@ -23,28 +23,50 @@ LICIT, ILLICIT, UNKNOWN = 0, 1, 2
 VAL_FRACTION = 0.15
 
 
-def load_data(root="data/elliptic", val_fraction=VAL_FRACTION, seed=0):
-    dataset = EllipticBitcoinDataset(root=root)
-    data = dataset[0]
 
-    train_mask = data.train_mask.clone()
-    test_mask = data.test_mask.clone()
+def temporal_val_split(train_mask, time_col, val_fraction=VAL_FRACTION):
+    """Carve the temporally-latest `val_fraction` of `train_mask` off as validation.
 
+    Split out of `load_data` so the anti-leakage guarantee is testable without
+    downloading the dataset: this is the claim the whole benchmark rests on, and
+    it was previously reachable only through a network call.
+
+    The guarantee: every validation node's time step is >= every fit node's.
+    Early stopping therefore never sees a node from before the nodes it trains
+    on, which is what makes the reported illicit-F1 a forward-looking number
+    rather than an interpolated one.
+
+    `time_col` is the standardized (z-scored) time step -- monotonic with real
+    time, which is all the ordering needs.
+    """
+    train_mask = train_mask.clone()
     train_idx = train_mask.nonzero(as_tuple=True)[0]
-    time_col = data.x[train_idx, 0]
-    order = torch.argsort(time_col)  # ascending: earliest -> latest
+    order = torch.argsort(time_col[train_idx])  # ascending: earliest -> latest
     n_val = int(len(order) * val_fraction)
-    val_idx = train_idx[order[-n_val:]]      # temporally latest slice of train
-    fit_idx = train_idx[order[:-n_val]]      # remainder used for gradient updates
+
+    if n_val == 0:  # too few training nodes to hold any back
+        fit_idx, val_idx = train_idx[order], train_idx[:0]
+    else:
+        val_idx = train_idx[order[-n_val:]]   # temporally latest slice
+        fit_idx = train_idx[order[:-n_val]]   # remainder gets gradient updates
 
     fit_mask = torch.zeros_like(train_mask)
     fit_mask[fit_idx] = True
     val_mask = torch.zeros_like(train_mask)
     val_mask[val_idx] = True
+    return fit_mask, val_mask
 
+
+def load_data(root="data/elliptic", val_fraction=VAL_FRACTION, seed=0):
+    dataset = EllipticBitcoinDataset(root=root)
+    data = dataset[0]
+
+    fit_mask, val_mask = temporal_val_split(
+        data.train_mask, data.x[:, 0], val_fraction=val_fraction
+    )
     data.fit_mask = fit_mask
     data.val_mask = val_mask
-    data.test_mask = test_mask
+    data.test_mask = data.test_mask.clone()
 
     return dataset, data
 
