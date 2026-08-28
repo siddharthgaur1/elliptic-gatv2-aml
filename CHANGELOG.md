@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+Portfolio nav link (2026-08-22):
+
+- Added a link back to the portfolio index from the README.
+
+Test coverage and docs pass (2026-08-08):
+
+- Added `tests/test_data_split.py`, extracting the anti-leakage invariant (`temporal_val_split`) into a pure, network-free function so it could be tested directly.
+- **Caught a real bug during extraction**: `val_fraction=0` triggered a numpy negative-slice inversion (`order[-0:]` is the whole array, `order[:-0]` is empty) that silently sent every training node to validation. Unreachable at the committed `val_fraction=0.15`, so published results are unaffected — now covered by a regression test.
+- README documents the invariant and the bug explicitly ("The anti-leakage invariant, and the bug testing it caught").
+- Fixed a README mechanism claim ("aggregation dilutes the illicit signal") that contradicted its own numbers — GATv2's recall is the *highest* of any model, which rules out dilution; the two GNNs fail for different reasons (GATv2 over-propagates, GCN dilutes), now documented separately.
+- Added hero visual / social preview card.
+
 Convergence rerun (2026-08-06):
 
 - Retrained all models with `--epochs 800` and early stopping (patience 15). Every run now ends on early stopping rather than the epoch budget: GATv2 at 114 (best 99), GCN at 110 (best 95), MLP at 123 (best 108).
