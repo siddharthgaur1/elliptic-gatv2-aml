@@ -183,7 +183,7 @@ results/    committed metrics.json, table.md, per-model run logs, trained
 
 - **No live deployment** — the Streamlit demo runs local-only against
   committed checkpoints; there's no hosted instance.
-- **CPU-only training** — GATv2's 100-epoch run takes ~24 min on CPU; no GPU
+- **CPU-only training** — GATv2's converged run (114 epochs under the 800-epoch budget) takes ~65 min on CPU; no GPU
   path is set up or benchmarked here.
 - **Time-step feature is standardized, not raw** — per-time-step analysis
   uses equal-count chronological bins, not exact integer steps (see "Per-
