@@ -1,0 +1,15 @@
+{
+  "model": "rf",
+  "seed": 2,
+  "hyperparams": {
+    "n_estimators": 100,
+    "class_weight": "balanced"
+  },
+  "test_metrics": {
+    "illicit_f1": 0.8104575163398693,
+    "illicit_precision": 0.9880478087649402,
+    "illicit_recall": 0.6869806094182825,
+    "macro_f1": 0.8997056499931952
+  },
+  "runtime_sec": 2.0929269790649414
+}

@@ -41,6 +41,35 @@ truncated — its best epoch was 108. GATv2 and GCN reproduce bit-for-bit
 their best rather than the budget running out. The correction moves the
 *baseline* up, so the graph models come out slightly further behind, not closer.
 
+### Seed variance (4 seeds)
+
+`results/` is the canonical seed-0 run. Seeds 1–3 were re-run with the same
+800-epoch budget and patience into `results/seeds/seed<N>/`, and
+`python -m scripts.aggregate_seeds` combines all four into
+`results/seeds/table.md` (mean ± sample std, read from each model's
+`*_run.json`):
+
+| Model | Illicit-P | Illicit-R | Illicit-F1 | Macro-F1 | Illicit-F1 per seed (0, 1, 2, 3) |
+|---|---|---|---|---|---|
+| **Random Forest** | 0.9704 ± 0.0337 | 0.6978 ± 0.0168 | **0.8113 ± 0.0048** | 0.9001 ± 0.0026 | 0.8085, 0.8184, 0.8105, 0.8081 |
+| MLP (features only) | 0.6908 ± 0.0961 | 0.6127 ± 0.0289 | 0.6454 ± 0.0345 | 0.8109 ± 0.0195 | 0.6558, 0.5970, 0.6504, 0.6785 |
+| GATv2 | 0.2486 ± 0.0826 | 0.7211 ± 0.0421 | 0.3651 ± 0.1032 | 0.6287 ± 0.0829 | 0.4266, 0.4131, 0.2107, 0.4100 |
+| GCN | 0.2957 ± 0.1158 | 0.5688 ± 0.1610 | 0.3603 ± 0.0926 | 0.6314 ± 0.0931 | 0.4088, 0.3933, 0.2221, 0.4170 |
+
+The ranking is not a seed-0 artifact: it holds on every seed individually.
+Random Forest's worst seed (0.8081) beats the MLP's best (0.6785), and the
+MLP's worst (0.5970) beats the best graph-model run (0.4266).
+
+The graph models' spread comes almost entirely from seed 2, and the cause is
+early stopping, not a different optimum. On that seed GATv2's validation
+illicit-F1 spiked to 0.282 at epoch 2, never beat it over the next 15 epochs,
+and patience 15 ended training at epoch 17 (seed 0 ran 114 epochs, best at 99).
+GCN stopped at epoch 32 with its best at epoch 17. Both runs are reported, not
+dropped: a patience window that one noisy early epoch can trip is part of how
+these models behave under this setup. A fifth seed was started but was killed
+when the machine ran out of memory, before it wrote any results, so it is not
+included.
+
 **Random Forest wins.** Not a typo, not a bug — see below.
 
 ## What the graph does and doesn't buy you
@@ -183,14 +212,17 @@ results/    committed metrics.json, table.md, per-model run logs, trained
 
 - **No live deployment** — the Streamlit demo runs local-only against
   committed checkpoints; there's no hosted instance.
-- **CPU-only training** — GATv2's converged run (114 epochs under the 800-epoch budget) takes ~65 min on CPU; no GPU
-  path is set up or benchmarked here.
+- **CPU-only training** — GATv2's converged run (114 epochs under the
+  800-epoch budget) takes ~65 min on CPU; no GPU path is set up or
+  benchmarked here.
 - **Time-step feature is standardized, not raw** — per-time-step analysis
   uses equal-count chronological bins, not exact integer steps (see "Per-
   time-step robustness" above); don't read the bin boundaries as exact dates.
-- **Single seed for the canonical comparison table** — `results/` reflects
-  seed 0 only; the retune check (see above) suggests the RF-vs-GNN gap is
-  real and not a seed artifact, but full multi-seed variance isn't reported.
+- **Four seeds, and one early-stopping failure mode** — `results/seeds/table.md`
+  reports mean ± std over seeds 0–3 (see "Seed variance"), and the ranking holds
+  on every seed. On seed 2 an early validation spike ended both graph-model runs
+  within 32 epochs; a longer patience or a minimum-epoch floor would likely
+  remove that failure, but neither is tested here.
 - **GATv2 underperforming here is dataset-specific**, not a general claim
   about GNNs vs. tree ensembles — see "What the graph does and doesn't buy
   you" above for why this dataset's features already encode local graph

@@ -10,3 +10,5 @@ data/
 run_all.log
 gatv2_retry.log
 results_retry/
+# Extra-seed runs: commit their metrics, not ~7 MB of checkpoints per seed.
+results/seeds/*/models/
