@@ -75,13 +75,22 @@ included.
 ## What the graph does and doesn't buy you
 
 On Elliptic, a plain Random Forest over the 165 hand-engineered node
-features (which already include 93 aggregated features summarizing each
+features (93 local, plus 72 aggregated features summarizing each
 transaction's 1-hop neighborhood) beats every graph model here by a wide
 margin, and also beats a features-only MLP. This is a known property of
 this dataset, not an artifact of this repo: the feature set was
 specifically engineered by Weber et al. to already encode a lot of local
 graph structure, so a tree ensemble over those features gets most of the
 graph's supervised signal "for free" without ever seeing an edge.
+
+The committed Random Forest only partly bears that out. Its impurity-based
+importances (`results/models/rf.joblib`, seed 0) put **22.2%** of the total
+on the 72 aggregated features, which are 44% of the columns, and **none of
+its ten most important features is aggregated**. The forest leans mostly on
+the local features. Read that as "the neighborhood aggregates help, but they
+are not where most of RF's edge comes from", not as proof in either
+direction. Impurity importance is biased toward high-cardinality features,
+and the aggregates are correlated with the local features they summarize.
 
 The GNNs here (GATv2, GCN) underperform even the plain MLP baseline, which
 means the message passing is actively hurting, not just failing to help.
