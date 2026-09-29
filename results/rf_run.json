@@ -6,10 +6,10 @@
     "class_weight": "balanced"
   },
   "test_metrics": {
-    "illicit_f1": 0.8084886128364389,
-    "illicit_precision": 0.9199057714958775,
-    "illicit_recall": 0.7211449676823638,
-    "macro_f1": 0.8983540873657487
+    "illicit_f1": 0.8166576527852893,
+    "illicit_precision": 0.9856396866840731,
+    "illicit_recall": 0.6971375807940905,
+    "macro_f1": 0.9029463361573393
   },
-  "runtime_sec": 5.184646844863892
+  "runtime_sec": 2.2135074138641357
 }
