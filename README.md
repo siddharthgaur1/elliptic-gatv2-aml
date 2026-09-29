@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 
-![Illicit-F1 by model and a precision/recall scatter: Random Forest 0.808 and MLP 0.656 beat GATv2 0.427 and GCN 0.409](results/figures/model_comparison.png)
+![Illicit-F1 by model and a precision/recall scatter: Random Forest 0.817 and MLP 0.482 beat GATv2 0.231 and GCN 0.219](results/figures/model_comparison.png)
 
 <sub>Regenerate with `python scripts/make_results_chart.py` — it reads `results/*_run.json`, so it cannot disagree with the table below.</sub>
 
@@ -16,30 +16,47 @@ way to be wrong.
 
 ## Results (test set: time steps 35-49, seed 0)
 
-All three neural models are trained to convergence: `--epochs 800` with
-early stopping (patience 15), and **early stopping is what ends each run** —
-GATv2 at epoch 114 (best 99), GCN at 110 (best 95), MLP at 123 (best 108).
-No model is stopped by the epoch budget.
+All three neural models run with `--epochs 800` and early stopping
+(patience 15) on a validation slice of **time steps 29-34** (see "Data and
+label encoding"). Early stopping ends every run: GATv2 at epoch 24 (best 9),
+GCN at 25 (best 10), MLP at 96 (best 81). No model is stopped by the epoch
+budget.
 
 | Model | Illicit-P | Illicit-R | Illicit-F1 | Macro-F1 |
 |---|---|---|---|---|
-| **Random Forest** | 0.9199 | 0.7211 | **0.8085** | 0.8984 |
-| MLP (features only) | 0.6789 | 0.6343 | 0.6558 | 0.8164 |
-| GATv2 | 0.3011 | 0.7313 | 0.4266 | 0.6774 |
-| GCN | 0.3885 | 0.4312 | 0.4088 | 0.6826 |
+| **Random Forest** | 0.9856 | 0.6971 | **0.8167** | 0.9029 |
+| MLP (features only) | 0.4169 | 0.5725 | 0.4825 | 0.7196 |
+| GATv2 | 0.1347 | 0.8144 | 0.2311 | 0.5014 |
+| GCN | 0.1253 | 0.8633 | 0.2188 | 0.4747 |
 
 Numbers are from the actual committed run: `results/metrics.json`,
 `results/table.md`, `results/*_run.json` (one per model, with hyperparams,
 seed, best epoch, and full training history). Nothing here is hand-typed
 without a backing file.
 
-An earlier version of this table came from a 100-epoch budget. Re-running at
-800 changed exactly one row: **the MLP improved** (illicit-F1 0.6417 → 0.6558,
-macro-F1 0.8091 → 0.8164), because it was the only model the old cap actually
-truncated — its best epoch was 108. GATv2 and GCN reproduce bit-for-bit
-(0.4266 and 0.4088), because their best epochs, 99 and 95, were genuinely
-their best rather than the budget running out. The correction moves the
-*baseline* up, so the graph models come out slightly further behind, not closer.
+**These numbers replaced a set that used a non-temporal validation slice.**
+Until 2026-09-29 the "latest 15% of training nodes" used for early stopping
+was chosen by sorting on `data.x[:, 0]`, on the belief that it was a
+standardized time step. It is not: PyG drops the time-step column, and
+`x[:, 0]` is an anonymised feature (correlation -0.026 with time). Validation
+was therefore an arbitrary 15% of steps 1-34, not the latest steps. The test
+set (PyG's own mask, steps 35-49) was never affected. Under the old slice the
+seed-0 illicit-F1 was RF 0.8085, MLP 0.6558, GATv2 0.4266, GCN 0.4088.
+
+What changed and why:
+
+- **The neural models got much worse** (MLP 0.6558 → 0.4825, GATv2 0.4266 →
+  0.2311, GCN 0.4088 → 0.2188). This is the split, not the machine: the
+  pre-fix code, rerun on the same machine, reproduces the old MLP and GCN
+  numbers exactly. With a genuinely later validation window, early stopping
+  picks much earlier checkpoints (GATv2 best epoch 99 → 9, GCN 95 → 10).
+- **Random Forest does not use the split at all.** It trains on
+  fit ∪ val, which is the whole `train_mask` either way. Its seed-0 number
+  moved (0.8085 → 0.8167) only because the old seed-0 forest was pickled with
+  scikit-learn 1.9.0, and this run uses the pinned 1.8.0. The pre-fix code
+  gives 0.8167 here too, and RF seeds 1-3 are bit-identical to before.
+- **The ranking did not change:** Random Forest > MLP > both graph models, on
+  every seed. The gap got wider.
 
 ### Seed variance (4 seeds)
 
@@ -51,24 +68,24 @@ their best rather than the budget running out. The correction moves the
 
 | Model | Illicit-P | Illicit-R | Illicit-F1 | Macro-F1 | Illicit-F1 per seed (0, 1, 2, 3) |
 |---|---|---|---|---|---|
-| **Random Forest** | 0.9704 ± 0.0337 | 0.6978 ± 0.0168 | **0.8113 ± 0.0048** | 0.9001 ± 0.0026 | 0.8085, 0.8184, 0.8105, 0.8081 |
-| MLP (features only) | 0.6908 ± 0.0961 | 0.6127 ± 0.0289 | 0.6454 ± 0.0345 | 0.8109 ± 0.0195 | 0.6558, 0.5970, 0.6504, 0.6785 |
-| GATv2 | 0.2486 ± 0.0826 | 0.7211 ± 0.0421 | 0.3651 ± 0.1032 | 0.6287 ± 0.0829 | 0.4266, 0.4131, 0.2107, 0.4100 |
-| GCN | 0.2957 ± 0.1158 | 0.5688 ± 0.1610 | 0.3603 ± 0.0926 | 0.6314 ± 0.0931 | 0.4088, 0.3933, 0.2221, 0.4170 |
+| **Random Forest** | 0.9868 ± 0.0010 | 0.6918 ± 0.0073 | **0.8134 ± 0.0049** | 0.9012 ± 0.0026 | 0.8167, 0.8184, 0.8105, 0.8081 |
+| MLP (features only) | 0.3781 ± 0.0467 | 0.5552 ± 0.0551 | 0.4478 ± 0.0375 | 0.6995 ± 0.0216 | 0.4825, 0.4294, 0.4752, 0.4040 |
+| GCN | 0.1365 ± 0.0083 | 0.8246 ± 0.0314 | 0.2340 ± 0.0112 | 0.5025 ± 0.0202 | 0.2188, 0.2415, 0.2433, 0.2325 |
+| GATv2 | 0.1213 ± 0.0110 | 0.8800 ± 0.0446 | 0.2129 ± 0.0157 | 0.4596 ± 0.0338 | 0.2311, 0.1964, 0.2201, 0.2039 |
 
 The ranking is not a seed-0 artifact: it holds on every seed individually.
-Random Forest's worst seed (0.8081) beats the MLP's best (0.6785), and the
-MLP's worst (0.5970) beats the best graph-model run (0.4266).
+Random Forest's worst seed (0.8081) beats the MLP's best (0.4825), and the
+MLP's worst (0.4040) beats the best graph-model run (0.2433). Between the two
+graph models the order is not stable: GATv2 edges GCN on seed 0, GCN is
+ahead on seeds 1-3 and on the mean. Read them as tied.
 
-The graph models' spread comes almost entirely from seed 2, and the cause is
-early stopping, not a different optimum. On that seed GATv2's validation
-illicit-F1 spiked to 0.282 at epoch 2, never beat it over the next 15 epochs,
-and patience 15 ended training at epoch 17 (seed 0 ran 114 epochs, best at 99).
-GCN stopped at epoch 32 with its best at epoch 17. Both runs are reported, not
-dropped: a patience window that one noisy early epoch can trip is part of how
-these models behave under this setup. A fifth seed was started but was killed
-when the machine ran out of memory, before it wrote any results, so it is not
-included.
+On three of four seeds GATv2's validation illicit-F1 peaked at epoch 2 or 9
+and patience 15 ended the run by epoch 24. On seed 2 it kept improving until
+epoch 127 and ran 142 epochs (~37 min), and its test illicit-F1 (0.2201) was
+no better than the short runs. Longer training did not help. Under the old,
+non-temporal validation slice, the seed-2 graph runs were the ones that
+stopped early. A fifth seed from the earlier round was killed when the
+machine ran out of memory and is not included.
 
 **Random Forest wins.** Not a typo, not a bug — see below.
 
@@ -84,7 +101,7 @@ graph structure, so a tree ensemble over those features gets most of the
 graph's supervised signal "for free" without ever seeing an edge.
 
 The committed Random Forest only partly bears that out. Its impurity-based
-importances (`results/models/rf.joblib`, seed 0) put **22.2%** of the total
+importances (`results/models/rf.joblib`, seed 0) put **22.5%** of the total
 on the 72 aggregated features, which are 44% of the columns, and **none of
 its ten most important features is aggregated**. The forest leans mostly on
 the local features. Read that as "the neighborhood aggregates help, but they
@@ -94,73 +111,60 @@ and the aggregates are correlated with the local features they summarize.
 
 The GNNs here (GATv2, GCN) underperform even the plain MLP baseline, which
 means the message passing is actively hurting, not just failing to help.
-**But the two fail in opposite ways, and an earlier version of this section
-got that wrong** by attributing both to one mechanism — "aggregation dilutes
-the illicit signal". Dilution predicts that recall falls. GATv2's recall is
-the *highest of any model here*, above Random Forest's. Whatever is happening
-to GATv2, it is not dilution.
+Both fail the same way: **they over-flag.** Their recall is the highest of
+any model here, above Random Forest's, and their precision is the lowest.
 
-The confusion matrices (`results/metrics.json`) separate the two cases:
+The confusion matrices (`results/metrics.json`, seed 0):
 
 | Model | TP | FP | Nodes flagged | Recall | Precision |
 |---|---|---|---|---|---|
-| Random Forest | 781 | 68 | 849 | 0.7211 | 0.9199 |
-| GATv2 | 792 | 1838 | **2630** | **0.7313** | 0.3011 |
-| GCN | 467 | 735 | 1202 | 0.4312 | 0.3885 |
+| Random Forest | 755 | 11 | 766 | 0.6971 | 0.9856 |
+| MLP | 620 | 867 | 1487 | 0.5725 | 0.4169 |
+| GATv2 | 882 | 5668 | **6550** | 0.8144 | 0.1347 |
+| GCN | 935 | 6530 | **7465** | **0.8633** | 0.1253 |
 
-**GATv2 over-propagates.** It flags 3.1× as many transactions as Random
-Forest to find 11 more true illicit ones, at a cost of 1,770 extra false
-positives. Message passing spreads the illicit signal *outward* onto the
-licit neighbors of illicit nodes, so the model condemns whole neighborhoods.
-That buys a marginally wider net and destroys precision — the opposite of
-dilution. The signal propagates too well, rather than being washed out.
-
-**GCN is the one that really is diluted.** Uniform averaging over a
-neighborhood that is ~98% licit costs it on *both* axes: recall 0.4312, the
-worst of the four, and precision 0.3885. It neither finds the illicit nodes
-nor is right when it flags them.
+GATv2 flags 8.6× as many transactions as Random Forest to find 127 more true
+illicit ones, at a cost of 5,657 extra false positives; GCN is worse still.
+Message passing spreads the illicit signal *outward* onto the licit
+neighbors of illicit nodes, so the models condemn whole neighborhoods. An
+earlier version of this section, written against the old validation slice,
+said GCN failed the opposite way (diluted signal, low recall). On the
+current run that is no longer true: both graph models over-propagate.
 
 The shared root cause is the class imbalance — illicit nodes are ~2% of the
-graph — but attention and uniform averaging turn that imbalance into
-different failures. Reporting a single mechanism for both hid the more
-interesting result.
+graph — combined with early stopping on a later time window, which picks
+checkpoints from the first 10 epochs, before the models have learned to be
+selective.
 
-For an AML use case the gap is concrete: GATv2 produces 2,630 alerts to catch
-792 real cases, roughly 3-in-10 alert precision, against Random Forest's
-9-in-10. That is the difference between a queue an analyst can work and one
-they cannot.
+For an AML use case the gap is concrete: GATv2 produces 6,550 alerts to catch
+882 real cases, roughly 1-in-7 alert precision, against Random Forest's
+nearly 99-in-100. That is the difference between a queue an analyst can work
+and one they cannot.
 
 A deeper hyperparameter search, an edge-dropout/graph-sampling scheme, or
 GraphSAGE-style neighbor sampling might close some of this gap, but on the
 run actually committed here, feature-only Random Forest is the honest state
 of the art for this task.
 
-**The gap is not undertraining, and that has now been tested twice.** An
-earlier check retuned GATv2 (150 epochs, lr=0.005, patience 25) and got
-illicit-F1 0.4269, within noise of 0.4266. The current committed run goes
-further: an 800-epoch budget with early stopping, where **GATv2 stops itself
-at epoch 114** having last improved at 99. Given eight times the budget it
-does not use it, and the test metrics reproduce exactly. Whatever is holding
-GATv2 at ~0.43 illicit-F1 on this dataset, it is not a lack of training.
+**The gap is not undertraining.** On seed 2, GATv2's validation score kept
+improving until epoch 127, and the run reached 0.2201 test illicit-F1, the
+same range as the seeds that stopped by epoch 24. An earlier check under the
+old validation slice (150 epochs, lr=0.005, patience 25) also found no gain
+from longer training. The budget is not what holds GATv2 back.
 
 ### Per-time-step robustness
 
-![Illicit-F1 per chronological test-period bin, all four models](results/figures/per_timestep_f1.png)
+![Illicit-F1 per test time step, all four models](results/figures/per_timestep_f1.png)
 
-`results/figures/per_timestep_f1.png` plots illicit-F1 in 15 chronological
-quantile bins over the test period (steps ≈35-49; PyG's built-in loader
-only exposes a standardized/z-scored time-step feature, not the raw
-integer, so bins are equal-count chronological buckets rather than exact
-per-step slices — see `src/evaluate.py` for the caveat). All four models
-show the same pattern: F1 is highest in the earliest test bins and collapses
-toward the end, with the last few bins containing zero or near-zero illicit
-nodes. This lines up with the well-documented dark-market shutdown around
-time step 43 in the Elliptic data, after which illicit activity in this
-network drops off sharply. Random Forest degrades the most gracefully of
-the four (still ~0.66-0.71 F1 several bins after the shutdown), while GATv2
-and GCN degrade fastest and hit 0 F1 earliest — another angle on the same
-finding: the graph signal is not adding robustness here, and if anything
-degrades faster under distribution shift.
+`results/figures/per_timestep_f1.png` plots illicit-F1 for each test time
+step 35-49, grouping nodes by their real time step (read from the raw CSV;
+see "Data and label encoding"). Random Forest holds 0.75-0.97 through step
+42, and every model collapses at step 43, in line with the well-documented
+dark-market shutdown around that step. After it, the per-step numbers rest
+on very few illicit nodes (2 to 56 per step, versus 33 to 239 before), so
+they are noisy. Random Forest stays near 0 for most of steps 43-49, apart
+from 0.67 at step 46, which has only 2 illicit nodes. GATv2 and GCN recover
+to ~0.3-0.4 at steps 48-49. Nothing here generalizes well past the shutdown.
 
 ### Attention inspection
 
@@ -174,22 +178,16 @@ degrades faster under distribution shift.
 (averaged over 8 heads) over the 1-hop neighborhood of three correctly
 flagged illicit test transactions, generated by `src/explain.py`. Attention
 is not uniform — a small number of neighbors dominate the weighted sum for
-each node. That is exactly what attention is supposed to do, and it is why
-GATv2 beats GCN on recall (0.73 vs 0.43): it finds the informative neighbors
-rather than averaging over everything.
-
-It is also why GATv2 is the *less* precise of the two. Sharp attention on a
-handful of neighbors propagates the illicit signal to them strongly, so the
-licit neighbors of an illicit transaction get flagged too. The mechanism that
-recovers recall is the same one that produces the 1,838 false positives.
-Concentrating attention is not the fix here — the node's own 165 features
+each node. That does not buy GATv2 anything over GCN here: on the current
+run GCN has the higher recall (0.86 vs 0.81) and the two are within noise on
+illicit-F1. Concentrating attention is not the fix — the node's own 165 features
 already separate the classes better than any neighborhood view of them does.
 
 ## Quickstart
 
 See "Reproduce" below — `pip install -r requirements.txt`, then
 `python -m scripts.run_all --epochs 800 --seed 0` trains all 4 models
-(~80 min CPU; early stopping ends every run well before 800) and writes
+(~10 min CPU for seed 0; early stopping ends every run well before 800) and writes
 `results/`.
 
 ## Architecture
@@ -221,17 +219,15 @@ results/    committed metrics.json, table.md, per-model run logs, trained
 
 - **No live deployment** — the Streamlit demo runs local-only against
   committed checkpoints; there's no hosted instance.
-- **CPU-only training** — GATv2's converged run (114 epochs under the
-  800-epoch budget) takes ~65 min on CPU; no GPU path is set up or
+- **CPU-only training** — GATv2 is the slow model: ~6 min for seed 0 (24
+  epochs), ~37 min for seed 2 (142 epochs); no GPU path is set up or
   benchmarked here.
-- **Time-step feature is standardized, not raw** — per-time-step analysis
-  uses equal-count chronological bins, not exact integer steps (see "Per-
-  time-step robustness" above); don't read the bin boundaries as exact dates.
-- **Four seeds, and one early-stopping failure mode** — `results/seeds/table.md`
-  reports mean ± std over seeds 0–3 (see "Seed variance"), and the ranking holds
-  on every seed. On seed 2 an early validation spike ended both graph-model runs
-  within 32 epochs; a longer patience or a minimum-epoch floor would likely
-  remove that failure, but neither is tested here.
+- **Four seeds, and early stopping picks very early checkpoints** —
+  `results/seeds/table.md` reports mean ± std over seeds 0–3 (see "Seed
+  variance"), and the ranking holds on every seed. GCN's best validation epoch
+  is 10 or earlier on all four seeds, GATv2's on three. A minimum-epoch floor or a
+  different validation window might change the graph-model numbers; neither
+  is tested here.
 - **GATv2 underperforming here is dataset-specific**, not a general claim
   about GNNs vs. tree ensembles — see "What the graph does and doesn't buy
   you" above for why this dataset's features already encode local graph
@@ -258,18 +254,25 @@ Running `python scripts/inspect_data.py` prints, among other things:
 - `data.train_mask` / `data.test_mask` already exist and implement the
   canonical temporal split (train ⊆ steps 1-34, test ⊆ steps 35-49):
   29,894 / 16,670 labeled nodes respectively.
-- Feature column 0 is a standardized (z-scored) time step, not a raw
-  integer — monotonic with real time order but not directly readable as
-  "step 37". `src/data.py` documents this and ranks nodes by this value
-  instead of assuming raw integers.
+- **`data.x` does not contain the time step.** PyG 2.8 builds
+  `x = feat_df.loc[:, 2:]`, dropping raw CSV column 0 (txId) and column 1
+  (time step, 1..49). `x` equals raw columns 2-166 row for row, and `x[:, 0]`
+  is an anonymised feature: 162,334 distinct values, correlation -0.026 with
+  the time step. An earlier version of this README said the opposite (that
+  `x[:, 0]` was a standardized time step); that was assumed, never checked,
+  and wrong.
 
-Validation slice for early stopping: rather than the raw "35-39 val /
-40-49 test" split suggested by the spec (which needs an integer time
-step PyG doesn't expose), `src/data.py` rank-orders the `train_mask` nodes
-by the standardized time feature and carves the temporally-latest 15% off
-as validation, leaving PyG's canonical `test_mask` (steps 35-49) untouched
-as the test set. This achieves the same "hold out a later time slice"
-purpose the spec was after.
+`src/data.py` reads the real time step back from the raw features CSV
+(`data/elliptic/raw/elliptic_txs_features.csv`, column 1) into
+`data.time_step`. PyG numbers nodes in CSV row order, and the load asserts
+that the recovered steps reproduce PyG's own `train_mask` / `test_mask`
+exactly, so a misaligned file fails loudly.
+
+Validation slice for early stopping: the latest time steps of the training
+range, cut on a whole-step boundary once they hold at least 15% of the
+labeled training nodes. That is **steps 29-34** (4,687 nodes, 15.7%); the
+models fit on steps 1-28 (25,207 nodes). PyG's canonical `test_mask` (steps
+35-49) is left untouched as the test set.
 
 ### The anti-leakage invariant, and the bug testing it caught
 
@@ -309,9 +312,14 @@ raising anything. Unreachable at the committed `val_fraction=0.15` over ~30k
 nodes; reachable by anyone lowering the fraction or running on a subset. It is
 now an explicit branch with a test.
 
-**The committed results are unaffected.** At `val_fraction=0.15` the real path
-takes the same branch it always did, so RF 0.8085 / GATv2 0.4266 / GCN 0.4088 /
-MLP 0.6558 stand exactly as published — verified rather than assumed.
+**The invariant held, and it was not enough.** The test above checks that
+the split orders nodes by `time_col`. It said nothing about whether the
+column passed in was time. `load_data` passed `x[:, 0]`, an anonymised
+feature, so the "temporal" validation slice was an arbitrary one, and every
+test stayed green. `tests/test_data_split.py` now also checks that the time
+step comes from the raw CSV rather than `x[:, 0]`, that a misaligned CSV is
+rejected, and that no time step is split between fit and validation. The
+results above were retrained after the fix; see "Results" for what moved.
 
 ## Models
 
@@ -339,10 +347,10 @@ pip install -r requirements.txt
 python scripts/inspect_data.py
 
 # 2. Train all 4 models + write results/metrics.json, results/table.md,
-#    figures (per-time-step F1 curve). ~80 min total on CPU. The budget is
-#    800 but early stopping (patience 15) ends every run far sooner —
-#    GATv2 at 114 epochs (~65 min, it is the slow one), GCN at 110 (~6 min),
-#    MLP at 123 (~6 min), RF in seconds.
+#    figures (per-time-step F1 curve). ~10 min total on CPU for seed 0. The
+#    budget is 800 but early stopping (patience 15) ends every run far
+#    sooner — GATv2 at 24 epochs (~6 min, it is the slow one), GCN at 25
+#    (~30 s), MLP at 96 (~1.5 min), RF in seconds.
 python -m scripts.run_all --epochs 800 --seed 0
 
 # 3. Attention inspection figures (uses the committed GATv2 weights)

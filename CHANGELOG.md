@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+Validation-split fix and retrain (2026-09-29):
+
+- **Fixed**: the early-stopping validation slice sorted training nodes on `data.x[:, 0]`, assumed to be a standardized time step. PyG drops the time-step column; `x[:, 0]` is an anonymised feature (corr -0.026 with time), so validation was not temporal. The real time step is now read from the raw CSV into `data.time_step` (alignment asserted against PyG's masks); validation = steps 29-34.
+- **Fixed**: the per-time-step F1 curve had the same bug (quantile bins over `x[:, 0]`); it now groups by real step.
+- Retrained seeds 0-3. Seed-0 illicit-F1: MLP 0.6558 → 0.4825, GATv2 0.4266 → 0.2311, GCN 0.4088 → 0.2188. RF 0.8085 → 0.8167 is a scikit-learn version difference, not the fix (RF ignores the split; seeds 1-3 unchanged). Ranking unchanged: RF > MLP > graph models on every seed.
+
 Portfolio nav link (2026-08-22):
 
 - Added a link back to the portfolio index from the README.

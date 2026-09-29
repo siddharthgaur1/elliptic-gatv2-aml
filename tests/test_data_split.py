@@ -1,9 +1,9 @@
 """The anti-leakage guarantee the benchmark's headline numbers rest on.
 
-This repo's result -- Random Forest illicit-F1 0.8085 beating GATv2's 0.4266 --
-is only meaningful if validation never sees nodes from before the ones the
-model fits on. That property was implemented but never tested, and it was
-unreachable without downloading the dataset.
+The early-stopping slice must be temporally after the nodes the model fits on.
+That needs two things: the split orders by the column it is given, and the
+column it is given is the real time step (PyG's x[:, 0] is not -- see the
+read_time_step tests at the bottom).
 
 No network, no dataset: `temporal_val_split` takes a mask and a time column.
 """
