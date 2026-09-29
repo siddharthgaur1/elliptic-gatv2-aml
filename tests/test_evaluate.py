@@ -22,31 +22,26 @@ def test_confusion_all_correct_has_no_off_diagonal():
 
 
 def test_per_timestep_f1_perfect_predictions_score_1():
-    n = 30
-    y_true = np.array([ILLICIT if i % 3 == 0 else LICIT for i in range(n)])
-    time_values = np.arange(n)  # already sorted, so bins == chronological chunks
-    f1s = per_timestep_f1(y_true, y_true, time_values, n_bins=3)
-    assert len(f1s) == 3
-    assert all(f1 == 1.0 for f1 in f1s)
+    y_true = np.array([ILLICIT, LICIT, ILLICIT, LICIT, ILLICIT, LICIT])
+    time_steps = np.array([35, 35, 36, 36, 37, 37])
+    f1s = per_timestep_f1(y_true, y_true, time_steps)
+    assert f1s == [1.0, 1.0, 1.0]
 
 
-def test_per_timestep_f1_bin_with_no_illicit_nodes_is_none():
-    y_true = np.array([LICIT] * 10)
-    y_pred = np.array([LICIT] * 10)
-    time_values = np.arange(10)
-    f1s = per_timestep_f1(y_true, y_pred, time_values, n_bins=2)
-    assert f1s == [None, None]
+def test_per_timestep_f1_step_with_no_illicit_nodes_is_none():
+    y_true = np.array([LICIT] * 4)
+    time_steps = np.array([35, 35, 36, 36])
+    assert per_timestep_f1(y_true, y_true, time_steps) == [None, None]
 
 
-def test_per_timestep_f1_respects_chronological_order_not_array_order():
-    # Node order in the arrays is scrambled; time_values re-sorts it before binning.
-    y_true = np.array([ILLICIT, LICIT, ILLICIT, LICIT])
-    y_pred = np.array([ILLICIT, LICIT, LICIT, LICIT])  # miss on the illicit node at time=2
-    time_values = np.array([3, 1, 2, 0])  # array index 0 is chronologically last
-    f1s = per_timestep_f1(y_true, y_pred, time_values, n_bins=2)
-    # chronological order by time_values: idx3(t0,LICIT) idx1(t1,LICIT) | idx2(t2,ILLICIT,miss) idx0(t3,ILLICIT,hit)
-    assert f1s[0] is None  # first bin: no illicit nodes
-    assert f1s[1] == pytest.approx(2 / 3)  # bin1: precision=1 (no FP), recall=0.5 (1 of 2 illicit caught)
+def test_per_timestep_f1_groups_by_step_not_array_order_or_count():
+    # Unequal step sizes and scrambled order: one point per distinct step, ascending.
+    y_true = np.array([ILLICIT, LICIT, ILLICIT, LICIT, ILLICIT])
+    y_pred = np.array([ILLICIT, LICIT, LICIT, LICIT, LICIT])
+    time_steps = np.array([40, 36, 40, 36, 40])  # step 36: 2 licit; step 40: 3 illicit, 1 hit
+    f1s = per_timestep_f1(y_true, y_pred, time_steps)
+    assert f1s[0] is None
+    assert f1s[1] == pytest.approx(0.5)  # precision 1, recall 1/3
 
 
 def test_comparison_table_rounds_and_preserves_all_models():

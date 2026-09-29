@@ -3,6 +3,8 @@
 Run this BEFORE writing any code that assumes a label encoding or split —
 the numbers below are read straight off the tensors, not from memory.
 """
+import numpy as np
+import pandas as pd
 import torch
 from torch_geometric.datasets import EllipticBitcoinDataset
 
@@ -26,26 +28,29 @@ def main():
     has_test = hasattr(data, "test_mask")
     print(f"train_mask: {has_train}, test_mask: {has_test}")
 
-    # First feature column is the time step (per Elliptic paper / PyG docs).
-    time_step = data.x[:, 0]
-    print("\n=== time step (feature col 0) range ===")
-    print(f"min: {time_step.min().item()}, max: {time_step.max().item()}")
-    # time step is stored normalized-looking or raw int 1..49 -- print raw uniques
-    uniq_ts = torch.unique(time_step)
-    print(f"num unique time steps: {uniq_ts.numel()}")
-    print(f"unique values (sorted): {sorted(uniq_ts.tolist())}")
+    # PyG builds x = feat_df.loc[:, 2:], dropping raw CSV column 0 (txId) and
+    # column 1 (time step). So x[:, 0] is NOT time -- show that, then read the
+    # real time step back from the raw CSV the way src.data does.
+    raw = pd.read_csv(dataset.raw_paths[0], header=None)
+    print("\n=== raw CSV vs PyG x ===")
+    print(f"raw CSV columns: {raw.shape[1]}, PyG x columns: {data.num_features}")
+    same = np.allclose(data.x.numpy(), raw.loc[:, 2:].to_numpy(dtype=np.float32), atol=1e-5)
+    print(f"x == raw CSV columns 2.. (row-aligned): {same}")
+    time_step = torch.tensor(raw[1].to_numpy())
+    x0 = data.x[:, 0]
+    corr = np.corrcoef(x0.numpy(), time_step.numpy())[0, 1]
+    print(f"x[:, 0]: {torch.unique(x0).numel()} unique values, corr with time step {corr:.3f}")
+    print(f"raw time step: min {int(time_step.min())}, max {int(time_step.max())}, "
+          f"{torch.unique(time_step).numel()} unique")
 
     if has_train and has_test:
         print("\n=== train_mask/test_mask stats ===")
         print(f"train_mask sum: {data.train_mask.sum().item()}")
         print(f"test_mask sum: {data.test_mask.sum().item()}")
-        # Check what time steps fall in train vs test mask
         train_ts = time_step[data.train_mask]
         test_ts = time_step[data.test_mask]
-        print(f"train time steps range: {train_ts.min().item()}..{train_ts.max().item()}")
-        print(f"test time steps range: {test_ts.min().item()}..{test_ts.max().item()}")
-        print(f"train unique ts: {sorted(torch.unique(train_ts).tolist())}")
-        print(f"test unique ts: {sorted(torch.unique(test_ts).tolist())}")
+        print(f"train time steps: {int(train_ts.min())}..{int(train_ts.max())}")
+        print(f"test time steps:  {int(test_ts.min())}..{int(test_ts.max())}")
 
         # Label distribution within masks
         for name, mask in [("train", data.train_mask), ("test", data.test_mask)]:

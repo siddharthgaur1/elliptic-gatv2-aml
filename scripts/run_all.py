@@ -72,17 +72,17 @@ def main(epochs=100, seed=SEED, out_dir="results"):
         json.dump(metrics, f, indent=2)
 
     # ---- per-time-step F1 curve ----
-    time_values = data.x[test_mask, 0].numpy()
+    time_values = data.time_step[test_mask].numpy()
     fig, ax = plt.subplots(figsize=(9, 5))
     curve_data = {}
     for name, pred in predictions.items():
         f1s = per_timestep_f1(y_true, pred, time_values)
         curve_data[name] = f1s
-        xs = list(range(35, 35 + len(f1s)))
+        xs = np.unique(time_values)
         ys = [f1 if f1 is not None else np.nan for f1 in f1s]
         ax.plot(xs, ys, marker="o", label=name)
     ax.axvline(43, color="gray", linestyle="--", alpha=0.6, label="step 43 (dark-market shutdown)")
-    ax.set_xlabel("approx. time step (chronological quantile bin, canonical steps 35-49)")
+    ax.set_xlabel("time step (test period, 35-49)")
     ax.set_ylabel("illicit F1")
     ax.set_title("Per-time-step illicit F1 on test set")
     ax.legend()

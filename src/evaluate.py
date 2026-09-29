@@ -1,12 +1,8 @@
 """Evaluation utilities: comparison table, confusion matrices, per-time-step F1 curve.
 
-PyG's EllipticBitcoinDataset exposes time step only as a standardized
-(z-scored) float (feature column 0), not the raw integer 1..49 used in the
-original paper. To plot a "per-time-step" curve we rank-order test nodes by
-that value and bin them into 15 equal-count quantile bins -- one bin per
-canonical step 35..49, in chronological order. Bin boundaries are therefore
-approximate, not exact integer time-step membership, and this is called out
-in the README.
+The per-time-step curve groups test nodes by their real 1..49 time step
+(`data.time_step`, read from the raw CSV by src.data -- PyG's `x` does not
+contain it), one point per canonical test step 35..49.
 """
 from pathlib import Path
 
@@ -17,8 +13,6 @@ from sklearn.metrics import confusion_matrix, f1_score
 
 from src.data import ILLICIT
 from src.models import build_model
-
-N_TEST_STEPS = 15  # canonical steps 35..49
 
 
 @torch.no_grad()
@@ -77,20 +71,17 @@ def confusion(y_true, y_pred):
     return {"tn": int(cm[0, 0]), "fp": int(cm[0, 1]), "fn": int(cm[1, 0]), "tp": int(cm[1, 1])}
 
 
-def per_timestep_f1(y_true, y_pred, time_values, n_bins=N_TEST_STEPS):
-    """Bin test nodes into n_bins chronological quantile bins, compute illicit-F1 per bin."""
-    order = np.argsort(time_values)
-    y_true_sorted = y_true[order]
-    y_pred_sorted = y_pred[order]
-    bins = np.array_split(np.arange(len(order)), n_bins)
+def per_timestep_f1(y_true, y_pred, time_steps):
+    """Illicit-F1 per distinct time step, in ascending step order.
+
+    None for a step with no illicit nodes (F1 undefined).
+    """
     f1s = []
-    for b in bins:
-        if len(b) == 0:
-            f1s.append(None)
-            continue
-        yt, yp = y_true_sorted[b], y_pred_sorted[b]
+    for step in np.unique(time_steps):
+        in_step = time_steps == step
+        yt, yp = y_true[in_step], y_pred[in_step]
         if (yt == ILLICIT).sum() == 0:
-            f1s.append(None)  # no illicit nodes in this bin -- undefined
+            f1s.append(None)
         else:
             f1s.append(f1_score(yt, yp, pos_label=ILLICIT, zero_division=0))
     return f1s
